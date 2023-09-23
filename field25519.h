@@ -13,10 +13,15 @@ struct i256 {
 
         i256 operator+(const i256 &other) const;
         i256 operator+(const i64 &other) const;
+        i256 operator-(const i256 &other) const;
         i256 operator-(const i64 &other) const;
         i256 operator*(const i256 &other) const;
+        bool operator==(const i256 &other) const;
+        i256 operator=(const i256 &other);
         void carry();
 };
 
 i256 pow(i256 &a, i256 &e);
-i256 inverse(i256 a);
+i256 inverse(i256 &a);
+void swap(i256 &a, i256 &b, i64 &bit);
+i256 random();

@@ -1,7 +1,7 @@
-#include <vector>
 #include "field25519.h"
+#include<cstdlib>
 
-
+// Arithmetic under modulo 2^255 - 19
 
 i256::i256(i64 value) {
         data.resize(16);
@@ -14,10 +14,9 @@ i64& i256::operator[](int index) {
         return data[index];
 }
 
-const i64& i256::operator[](int index) const{
+const i64& i256::operator[](int index) const {
         return data[index];
 }
-
 
 
 i256 i256::operator+(const i256 &other) const {
@@ -40,6 +39,17 @@ i256 i256::operator+(const i64 &other) const {
                 value >>= 16;
         }
         result.carry();
+        return result;
+}
+
+
+i256 i256::operator-(const i256 &other) const {
+        i256 result;
+
+        for(int i = 0; i < 16; ++i) {
+                result[i] = data[i] - other.data[i];
+        }
+
         return result;
 }
 
@@ -76,6 +86,23 @@ i256 i256::operator*(const i256 &other) const {
 }
 
 
+bool i256::operator==(const i256 &other) const {
+        for(int i = 0; i < 16; i++)
+                if(data[i] != other[i])
+                        return false;
+        return true;
+}
+
+
+i256 i256::operator=(const i256 &other) {
+        if(this != &other)
+                for(int i = 0; i < 16; i++)
+                        data[i] = other[i];
+
+        return *this;
+}
+
+
 void i256::carry() {
         i64 c;
         for(int i = 0; i < 16; ++i) {
@@ -85,7 +112,6 @@ void i256::carry() {
                 else            data[0] += 38*c;
         }
 }
-
 
 
 i256 pow(i256 &a, i256 &e) {
@@ -103,12 +129,29 @@ i256 pow(i256 &a, i256 &e) {
 }
 
 
-
-
-i256 inverse(i256 a) {
+i256 inverse(i256 &a) {
         // Define order of field minus 2;
         i256 q(0xffff);
+        // i256 q;
+        // for(int i = 0; i < 16; i++) q[i] = 0xffff;
         q[15] &= 0xfff;         q = q - 20;
 
         return pow(a, q);
+}
+
+
+void swap(i256 &a, i256 &b, i64 &bit) {
+        i64 t, c = !(bit - 1);
+        for(int i = 0; i < 16; i++) {
+                t = c & (a[i] ^ b[i]);
+                a[i] ^= t;
+                b[i] ^= t;
+        }
+}
+
+
+i256 random() {
+        i256 r;
+        for(int i = 0; i < 16; i++)
+                r[i] = rand() % 0x10000;
 }
