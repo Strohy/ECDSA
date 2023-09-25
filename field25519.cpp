@@ -5,9 +5,8 @@
 
 i256::i256(i64 value) {
         data.resize(16);
-        for(int i = 0; i < 16; ++i) {
-                data[i] = value;
-        }
+        data[0] = value;
+        carry();
 }
 
 i64& i256::operator[](int index) {
@@ -25,7 +24,7 @@ i256 i256::operator+(const i256 &other) const {
         for(int i = 0; i < 16; ++i) {
                 result[i] = data[i] + other.data[i];
         }
-
+        result.carry();
         return result;
 }
 
@@ -49,7 +48,7 @@ i256 i256::operator-(const i256 &other) const {
         for(int i = 0; i < 16; ++i) {
                 result[i] = data[i] - other.data[i];
         }
-
+        result.carry();
         return result;
 }
 
@@ -73,10 +72,12 @@ i256 i256::operator*(const i256 &other) const {
 
         for(int i = 0; i < 16; ++i)
                 for(int j = 0; j < 16; j++)
-                        temp[i+j] = data[i] * other[j];
+                        temp[i+j] += data[i] * other[j];
 
-        for(int i = 0; i < 16; i++)
+        for(int i = 0; i < 16; i++) {
+                result[i] = temp[i];
                 result[i] += 38 * temp[i+16];
+        }
         
         result.carry();
         result.carry();
@@ -114,13 +115,13 @@ void i256::carry() {
 }
 
 
-i256 pow(i256 &a, i256 &e) {
+i256 power(i256 &a, i256 &e) {
         i256 r; r[0] |= 1;
 
         for(int i = 15; i >= 0; i--) {
                 for(int j = 15; j >= 0; j--) {
                         r = r*r;
-                        if((a[i*16] >> j) & 1)
+                        if((e[i] >> j) & 1)
                                 r = r*a;
                 }
         }
@@ -131,17 +132,16 @@ i256 pow(i256 &a, i256 &e) {
 
 i256 inverse(i256 &a) {
         // Define order of field minus 2;
-        i256 q(0xffff);
-        // i256 q;
-        // for(int i = 0; i < 16; i++) q[i] = 0xffff;
-        q[15] &= 0xfff;         q = q - 20;
+        i256 q;
+        for(int i = 0; i < 16; i++) q[i] = 0xffff;
+        q[15] &= 0x7fff;         q = q - 20;
 
-        return pow(a, q);
+        return power(a, q);
 }
 
 
-void swap(i256 &a, i256 &b, i64 &bit) {
-        i64 t, c = !(bit - 1);
+void swap25519(i256 &a, i256 &b, i64 &bit) {
+        i64 t, c = ~(bit - 1);
         for(int i = 0; i < 16; i++) {
                 t = c & (a[i] ^ b[i]);
                 a[i] ^= t;
@@ -154,4 +154,5 @@ i256 random() {
         i256 r;
         for(int i = 0; i < 16; i++)
                 r[i] = rand() % 0x10000;
+        return r;
 }
